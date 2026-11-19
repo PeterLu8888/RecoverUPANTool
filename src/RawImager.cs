@@ -133,6 +133,9 @@ sealed class Program
     static int _rounds = 3;
     static double _cooldownSec = 90;
     static double _prewaitSec = 0;
+    static int _paceMs = 0;
+    static int _batch = 0;
+    static double _restSec = 0;
     static int _exitCode;
 
     static void Main(string[] args)
@@ -161,6 +164,9 @@ sealed class Program
                 case "--rounds": _rounds = int.Parse(args[++i]); break;
                 case "--cooldown": _cooldownSec = double.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--prewait": _prewaitSec = double.Parse(args[++i], CultureInfo.InvariantCulture); break;
+                case "--pace": _paceMs = int.Parse(args[++i]); break;
+                case "--batch": _batch = int.Parse(args[++i]); break;
+                case "--rest": _restSec = double.Parse(args[++i], CultureInfo.InvariantCulture); break;
             }
         }
 
@@ -445,6 +451,12 @@ sealed class Program
                     recovered++;
                 }
                 catch (Win32Exception) { still.Add(off); }
+                if (_paceMs > 0) System.Threading.Thread.Sleep(_paceMs);
+                if (_batch > 0 && attempted % _batch == 0 && _restSec > 0)
+                {
+                    Log(string.Format(CultureInfo.InvariantCulture, "  paced rest {0:N0}s after {1} attempts (recovered={2})", _restSec, attempted, recovered));
+                    System.Threading.Thread.Sleep((int)(_restSec * 1000));
+                }
                 if (sw.Elapsed.TotalSeconds - lastLog > 30)
                 {
                     lastLog = sw.Elapsed.TotalSeconds;
@@ -465,6 +477,7 @@ sealed class Program
         }
 
         if (pending.Count == 0) { Log("pass2: all previously failed chunks recovered"); return; }
+        if (_p2BudgetSec <= 0) { Log("split phase disabled (--p2budget 0)"); return; }
 
         // final attempt: binary-split each remaining chunk to salvage partial data
         Log("pass2: splitting " + pending.Count + " stubborn chunks down to " + _p2Min + " B (budget " + _p2BudgetSec + "s)");
