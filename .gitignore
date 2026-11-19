@@ -1,0 +1,14 @@
+# build output
+*.exe
+*.pdb
+bin/
+obj/
+
+# recovery artifacts (never commit images or device-specific maps)
+*.raw
+*.img
+*.state
+bad-sectors.txt
+image-progress.log
+STOP.flag
+STATUS.txt
