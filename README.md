@@ -89,6 +89,27 @@ BAD       <偏移> <长度>                    最终仍不可读
 SUMMARY   total=.. written=.. zero=.. badbytes=.. badchunks=..
 ```
 
+## 附带的只读提取器（ExfatExtract）
+
+不想用第三方软件时，可以用仓库里的 `ExfatExtract.exe`（源码 `src/ExfatExtract.cs`）直接读镜像取文件，
+不需要挂载、不需要管理员、不会写入镜像。
+
+```powershell
+.\build.ps1                                        # 编译出 ExfatExtract.exe
+
+# 1) 导出完整文件清单（路径+大小），自己用记事本/Excel 打开挑
+ExfatExtract.exe --img E-volume.raw --list filelist.tsv
+
+# 2) 拷某个目录（递归子目录）
+ExfatExtract.exe --img E-volume.raw --copy '\DCIM' 'D:\recovered\DCIM'
+
+# 3) 拷全部，并限制总字节数（避免把盘写满）
+ExfatExtract.exe --img E-volume.raw --all 'D:\recovered' --maxbytes 200GB
+```
+
+`--copy` 的路径参数用 exFAT 卷内路径（`\DCIM`），也接受 DMDE 风格的 `$Root\DCIM`。
+控制台只打印计数器，不打印文件名。
+
 ## 恢复数据
 
 1. 准备一块 ≥ 镜像逻辑大小的空盘/分区（**不要写回原盘**）；
